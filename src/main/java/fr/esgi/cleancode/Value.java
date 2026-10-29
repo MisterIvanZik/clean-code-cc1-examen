@@ -1,3 +1,5 @@
+package fr.esgi.cleancode;
+
 public enum Value {
     TWO(2),
     THREE(3),
