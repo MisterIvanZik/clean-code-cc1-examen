@@ -90,4 +90,26 @@ class HandTest {
         ));
         assertEquals(80, hand.score());
     }
+
+    @Test
+    void should_prioritize_highest_scoring_combination_when_multiple_apply() {
+        Hand fullHand = new Hand(List.of(
+            new Card(Value.THREE, Suit.HEART),
+            new Card(Value.THREE, Suit.SPADE),
+            new Card(Value.THREE, Suit.DIAMOND),
+            new Card(Value.SEVEN, Suit.CLUB),
+            new Card(Value.SEVEN, Suit.SPADE)
+        ));
+
+        assertEquals(Combination.FULL, fullHand.identifyCombination());
+        assertEquals(50, fullHand.score());
+    }
+
+    @Test
+    void should_throw_exception_when_hand_does_not_contain_five_cards() {
+        org.junit.jupiter.api.Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> new Hand(List.of(new Card(Value.ACE, Suit.HEART)))
+        );
+    }
 }
