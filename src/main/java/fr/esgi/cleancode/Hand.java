@@ -1,27 +1,45 @@
 package fr.esgi.cleancode;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Hand {
+
+    private static final int HAND_SIZE = 5;
+    private static final long PAIRE_SIZE = 2;
+    private static final long BRELAN_SIZE = 3;
+    private static final long CARRE_SIZE = 4;
+
     private final List<Card> cards;
 
     public Hand(List<Card> cards) {
-        if (cards == null || cards.size() != 5) {
-            throw new IllegalArgumentException("Une main doit comporter exactement 5 cartes.");
+        if (cards == null || cards.size() != HAND_SIZE) {
+            throw new IllegalArgumentException(
+                    "Une main doit comporter exactement " + HAND_SIZE + " cartes");
         }
         this.cards = List.copyOf(cards);
     }
 
     public Combination identifyCombination() {
-        if (isQuinteFlush()) return Combination.QUINTE_FLUSH;
-        if (isCarre()) return Combination.CARRE;
-        if (isFull()) return Combination.FULL;
-        if (isCouleur()) return Combination.COULEUR;
-        if (isSuite()) return Combination.SUITE;
-        if (isBrelan()) return Combination.BRELAN;
+        if (isQuinteFlush()) {
+            return Combination.QUINTE_FLUSH;
+        }
+        if (isCarre()) {
+            return Combination.CARRE;
+        }
+        if (isFull()) {
+            return Combination.FULL;
+        }
+        if (isCouleur()) {
+            return Combination.COULEUR;
+        }
+        if (isSuite()) {
+            return Combination.SUITE;
+        }
+        if (isBrelan()) {
+            return Combination.BRELAN;
+        }
         return Combination.CARTE_HAUTE;
     }
 
@@ -33,12 +51,24 @@ public class Hand {
         return combination.getPoints();
     }
 
-    public int highestCardValue() {
+    private int highestCardValue() {
         return cards.stream()
                 .map(Card::value)
                 .mapToInt(Value::getPoints)
                 .max()
-                .orElse(0);
+                .orElseThrow();
+    }
+
+    private boolean isQuinteFlush() {
+        return isSuite() && isCouleur();
+    }
+
+    private boolean isCarre() {
+        return hasGroupOfSize(CARRE_SIZE);
+    }
+
+    private boolean isFull() {
+        return hasGroupOfSize(BRELAN_SIZE) && hasGroupOfSize(PAIRE_SIZE);
     }
 
     private boolean isCouleur() {
@@ -49,38 +79,34 @@ public class Hand {
     }
 
     private boolean isSuite() {
-        List<Integer> values = cards.stream()
+        List<Integer> values = sortedDistinctValues();
+        if (values.size() != HAND_SIZE) {
+            return false;
+        }
+        int lowest = values.get(0);
+        int highest = values.get(HAND_SIZE - 1);
+        return highest - lowest == HAND_SIZE - 1;
+    }
+
+    private boolean isBrelan() {
+        return hasGroupOfSize(BRELAN_SIZE);
+    }
+
+    private boolean hasGroupOfSize(long size) {
+        return countByValue().containsValue(size);
+    }
+
+    private Map<Value, Long> countByValue() {
+        return cards.stream()
+                .collect(Collectors.groupingBy(Card::value, Collectors.counting()));
+    }
+
+    private List<Integer> sortedDistinctValues() {
+        return cards.stream()
                 .map(Card::value)
                 .map(Value::getPoints)
                 .distinct()
                 .sorted()
                 .toList();
-
-        if (values.size() != 5) {
-            return false;
-        }
-        return values.get(4) - values.get(0) == 4;
-    }
-
-    private Map<Value, Long> valueCounts() {
-        return cards.stream()
-                .collect(Collectors.groupingBy(Card::value, Collectors.counting()));
-    }
-
-    private boolean isBrelan() {
-        return valueCounts().containsValue(3L);
-    }
-
-    private boolean isCarre() {
-        return valueCounts().containsValue(4L);
-    }
-
-    private boolean isFull() {
-        Collection<Long> counts = valueCounts().values();
-        return counts.contains(3L) && counts.contains(2L);
-    }
-
-    private boolean isQuinteFlush() {
-        return isSuite() && isCouleur();
     }
 }
